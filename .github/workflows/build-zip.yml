@@ -1,0 +1,39 @@
+name: Build Taskbar Studio ZIP
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "TaskbarStudio_Python/**"
+      - ".github/workflows/build-zip.yml"
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Create ZIP archive
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_DEFLATED
+
+          folder = Path("TaskbarStudio_Python")
+          output = Path("TaskbarStudio_Python.zip")
+          with ZipFile(output, "w", ZIP_DEFLATED) as archive:
+              for path in folder.rglob("*"):
+                  if path.is_file():
+                      archive.write(path, path.as_posix())
+          print(f"Created {output} ({output.stat().st_size} bytes)")
+          PY
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TaskbarStudio_Python
+          path: TaskbarStudio_Python.zip
+          if-no-files-found: error
+          retention-days: 30
